@@ -12,11 +12,15 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_PASSWORD: root_password
           MYSQL_DATABASE: biblioteca
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - uses: actions/checkout@v4
@@ -30,8 +34,10 @@ jobs:
 
       - name: Run Tests with Maven
         env:
-          # Estas variables sobrescriben tu application.properties
-          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/biblioteca?allowPublicKeyRetrieval=true&useSSL=false
+          # Forzamos los parámetros de conexión que requiere el runner de Linux
+          SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/biblioteca?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
           SPRING_DATASOURCE_USERNAME: root
-          SPRING_DATASOURCE_PASSWORD: root
+          SPRING_DATASOURCE_PASSWORD: root_password
+          # Evita que Hibernate intente validar antes de que MySQL termine de despertar del todo
+          SPRING_JPA_HIBERNATE_DDL_AUTO: update
         run: mvn test
