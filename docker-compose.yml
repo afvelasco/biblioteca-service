@@ -1,0 +1,38 @@
+services:
+  # --- SERVICIO DE BASE DE DATOS ---
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-biblioteca
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: biblioteca
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql # Persistencia: tus datos no se borran si apagas el contenedor
+    networks:
+      - biblioteca-net
+
+  # --- TU MICROSERVICIO JAVA ---
+  app-service:
+    image: afvelasco68/biblioteca-service:v1 # La imagen que subiste a Docker Hub
+    container_name: app-biblioteca
+    ports:
+      - "80:8080" # El servidor responderá en el puerto 80 (web estándar)
+    environment:
+      # Configuramos Spring para que use el nombre del servicio 'mysql-db' como HOST
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/biblioteca?allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root_password
+    depends_on:
+      - mysql-db
+    networks:
+      - biblioteca-net
+
+# --- RECURSOS COMPARTIDOS ---
+networks:
+  biblioteca-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
